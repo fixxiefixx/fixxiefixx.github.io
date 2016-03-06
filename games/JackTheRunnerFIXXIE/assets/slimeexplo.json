@@ -1,0 +1,45 @@
+{
+"frames": {
+	"slimeexplo01": {
+		"frame": {"x":65, "y":0, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo02": {
+		"frame": {"x":65, "y":130, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo03": {
+		"frame": {"x":65, "y":65, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo04": {
+		"frame": {"x":130, "y":0, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo05": {
+		"frame": {"x":0, "y":130, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo06": {
+		"frame": {"x":0, "y":65, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	},
+	"slimeexplo07": {
+		"frame": {"x":0, "y":0, "w":64, "h":64},
+		"spriteSourceSize": {"x":0,"y":0,"w":64,"h":64},
+		"sourceSize": {"w":64,"h":64}
+	}
+
+},
+"meta": {
+	"image": "john",
+	"size": {"w": 195, "h": 195},
+	"scale": "1"
+}
+}
