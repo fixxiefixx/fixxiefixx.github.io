@@ -47,6 +47,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     //füge hie rein was du alles laden musst.
     this.load.atlas("john");
     this.load.atlas("zombie");
+    this.load.atlas("wobby");
     this.load.atlas("slimeexplo");
     this.load.atlas("prof");
     this.load.tilemap('map',null,null,Phaser.Tilemap.TILED_JSON);
@@ -293,10 +294,18 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                     pipename="slimepipe2";
                 }
                 this.pipeobj=state.getMapObjects(state.map,pipename)[0];
-                state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
+                if(state.bossHealth>10){
+                    this.timer=1;
+                    state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
+                }
+                else{
+                   this.timer=1.7;
+                   state.addWobby(this.pipeobj.x+32,this.pipeobj.y);
+                }                   
+                
                 if(this.zanz++<4)
                 {
-                    this.timer=1;
+                    
                     this.phase=2;
                  
                 }else{
@@ -433,7 +442,109 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
         this.addGameObject(zombie);
 }
 
+
+
+JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
+    //return;
+    var state=this;
+    var zombie = this.add.sprite(x,y, "wobby", "wobby0015");
+        this.physics.enable(zombie);
+        zombie.body.setSize(14,64,0,0);
+        zombie.anchor.setTo(.5,1);
+        zombie.animations.add("walk",Phaser.Animation.generateFrameNames("wobby",1,37,"",4),30,true);
+        zombie.animations.add("jump",["wobby0016"],1,false);
+        zombie.animations.add("stand",["wobby0015"],1,false);
+        zombie.animations.play("stand");
+        zombie.jumpTime=3;
+        zombie.prevGround=false;
+        zombie.health=6;
+        zombie.firstfall=true;
+        zombie.type="zombie";
+        zombie.updateObj=function(dt,state){
+            state.physics.arcade.collide(this,state.layer_collision);
+            if(state.physics.arcade.overlap(this,state.player))
+            {
+                state.bgmusicSound.stop();
+                state.bossmusicSound.stop();
+                onLose();
+            }
+            
+            var isGround=this.body.onFloor();
+            if(isGround)
+                this.firstfall=false;
+            
+            
+            this.body.velocity.x=0;
+            var playerDistX=Math.abs(state.player.x-this.x);
+            if(this.x-state.player.x<400 && !this.firstfall)
+            {
+                if(isGround&&!this.prevGround)
+            {
+                this.animations.play("walk");
+            }
+                if(this.jumpTime>0)
+                {
+                    this.jumpTime-=dt;
+                }
+            
+                if(this.jumpTime<=0 && isGround)
+                {
+                    this.jumpTime=Math.random()*4+1;
+                    this.body.velocity.y = -320;
+                    this.animations.play("jump");
+                    isGround=false;
+                }
+                if(playerDistX>10)
+                {
+                    if(isGround)
+                        this.animations.play("walk");
+                    if(state.player.x<this.x)
+                    {
+                        this.body.velocity.x=-50;
+                        if(isGround)
+                        {
+                            
+                            this.scale.x=1;
+                        }
+                    }else
+                    {
+                        this.body.velocity.x=50;
+                        this.scale.x=-1;
+                    }
+                }else{
+                    if(isGround)
+                        this.animations.play("stand");
+                }
+                this.prevGround=isGround;
+            }
+            
+            
+            
+            if(this.y>500)
+            {
+                state.removeGameObject(this);
+            }
+            
+        }
+        zombie.objDamage=function(){
+            this.health-=1;
+            if(this.health<0.1)
+            {
+                this.objKill();
+            }else
+            {
+                state.hmmSound.play();
+            }
+        }
+        zombie.objKill=function(){
+            state.addSlimeexplo(this.x,this.y);
+            state.removeGameObject(this);
+        }
+        this.addGameObject(zombie);
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.addBackZombie = function(x,y) {
+    
     var backzombie = this.add.sprite(x,y, "zombie", "walk0001");
     backzombie.visible=false;
     backzombie.updateObj=function(dt,state){
@@ -615,6 +726,15 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
         this.addZombie(zombiespawn.x,zombiespawn.y-64);
     }
 
+    //Add Wobbies
+    var wobbiespawns=this.getMapObjects(this.map,"wobby");
+    var i;
+    for(i=0;i<wobbiespawns.length;i++)
+    {
+        var wobbiespawn=wobbiespawns[i];
+        this.addWobby(wobbiespawn.x,wobbiespawn.y-64);
+    }
+    
     //Add Proftriggers
     var proftriggerspawns=this.getMapObjects(this.map,"proftrigger");
     for(i=0;i<proftriggerspawns.length;i++)
