@@ -174,6 +174,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
     prof.animations.add("open",["pof03","prof04","prof05","prof06","prof07","prof08","prof09","prof10","prof01"],20,false);
     prof.animations.add("close",["pof10","prof09","prof08","prof07","prof06","prof05","prof04","prof03"],20,false);
     prof.animations.add("laughing",["prof01","prof02"],10,true);
+    prof.animations.add("die",["prof11","prof12","prof13","prof14","prof15","prof16","prof17","prof18"],8,false);
+    prof.animations.add("aua",["prof11","prof12"],10,true);
     prof.animations.play("open");
     prof.timer=0.5;
     prof.phase=0;
@@ -207,11 +209,36 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
                     state.removeGameObject(this);
                 }
             break;
+            case 3://Sterben
+            this.timer-=dt;
+                if(this.timer<=0)
+                {
+                    state.addSlimeexplo(this.x+32,this.y+64);
+                    this.timer=2;
+                    this.phase=4;
+                }
+            break;
+            case 4://Platzen
+            this.timer-=dt;
+            if(this.timer<=0)
+                {
+                    onVictory();
+                }
+            break;
         }
     }
     prof.objDamage=function(){
         if(this.phase==1){
             state.damageBoss();
+            if(state.bossHealth>0)
+            {
+                this.animations.play("aua");
+                state.hahaSound.stop();
+            }else{
+                this.animations.play("die");
+                this.timer=1;
+                this.phase=3;
+            }
         }
     }
     this.addGameObject(prof);
@@ -264,20 +291,24 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                 }
             break;
             case 1://Prof spawnen
-                state.killAllZombies();
-                var pipename;
-                var profspawnname;
-                if(Math.random()<0.5)
-                {
-                    profspawnname="profspawn1";
-                }else{
-                    profspawnname="profspawn2";
-                }
                 
-                this.profspawnobj=state.getMapObjects(state.map,profspawnname)[0];
-                state.addProf(this.profspawnobj.x,this.profspawnobj.y-32);
-                this.timer=4;
-                this.phase=2;
+                
+            
+                    state.killAllZombies();
+                    var pipename;
+                    var profspawnname;
+                    if(Math.random()<0.5)
+                    {
+                        profspawnname="profspawn1";
+                    }else{
+                        profspawnname="profspawn2";
+                    }
+                    
+                    this.profspawnobj=state.getMapObjects(state.map,profspawnname)[0];
+                    state.addProf(this.profspawnobj.x,this.profspawnobj.y-32);
+                    this.timer=4;
+                    this.phase=2;
+                
             break;
             case 2://Warten bis Prof wieder Tür zu gemacht hat
                 this.timer-=dt;
@@ -286,6 +317,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                 }
             break;
             case 3://Zombie spawnen
+            if(state.bossHealth>0)
+                {
                 var pipename;
             if(Math.random()<0.5)
                 {
@@ -313,7 +346,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                 this.phase=4;
                 this.zanz=0;
                 }
-                
+                }
             break;
             case 4://Den Zombie Zeit geben um vom Spieler fertig gemacht zu werden
                 this.timer-=dt;
@@ -597,7 +630,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
     {
         this.bgmusicSound.stop();
         this.bossmusicSound.stop();
-        onVictory();
+        //onVictory();
     }
 }
 
