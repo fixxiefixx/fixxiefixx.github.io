@@ -491,7 +491,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
         zombie.animations.play("stand");
         zombie.jumpTime=3;
         zombie.prevGround=false;
-        zombie.health=6;
+        zombie.health=5;
         zombie.firstfall=true;
         zombie.type="zombie";
         zombie.updateObj=function(dt,state){
