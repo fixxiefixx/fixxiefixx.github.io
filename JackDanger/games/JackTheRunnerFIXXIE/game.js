@@ -57,6 +57,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.image("fire");
     this.load.image("chili");
     this.load.image("bar");
+    this.load.image("bg","bg.jpg");
     
     this.load.audio("slimeexplo",["slimeexplo.ogg","slimeexplo.mp3"]);
     this.load.audio("hmm",["hmm.ogg","hmm.mp3"]);
@@ -636,6 +637,14 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
     this.stage.backgroundColor = '#1A1008';
+    
+    this.background=this.add.tileSprite(0,0,800,450,"bg","");
+    this.background.fixedToCamera=true;
+    this.background.updateObj=function(dt,state){
+        this.tilePosition.x=state.camera.x*-0.1;
+    }
+    
+    
     this.map = this.add.tilemap('map');
     this.map.addTilesetImage('tiles','tileset');
     this.map.addTilesetImage('datatiles','datatiles');
@@ -653,6 +662,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
     this.objectIdsToRemove=new Array();
     this.objectsToAdd=new Array();
     this.beiobjid=0;
+    
+    
+    
     this.maxBossHealth=25;
     this.bossHealth=this.maxBossHealth;
     
@@ -749,6 +761,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
     }
     this.addGameObject(this.player);
     
+    this.addGameObject(this.background);
 
     //Add Zombies
     var zombiespawns=this.getMapObjects(this.map,"zombie");
