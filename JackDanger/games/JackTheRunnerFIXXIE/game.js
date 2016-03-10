@@ -611,6 +611,31 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBossHealth = function() {
     redbar.tint="0xD61313";
     this.addGameObject(redbar);
     
+    var orangebar=this.add.sprite(0,450-32,"bar");
+    orangebar.fixedToCamera=true;
+    orangebar.width=800;
+    orangebar.height=32;
+    orangebar.tint="0xFFA033";
+    orangebar.timer=0;
+    orangebar.lastgreenw=redbar.width;
+    orangebar.updateObj=function(dt,state){
+        if(greenbar.width!=this.lastgreenw)
+        {
+            this.timer=1;
+            this.lastgreenw=greenbar.width;
+        }
+        if(this.timer>0)
+        {
+            this.timer-=dt;
+        }else{
+        if(this.width>state.bossbar.width)
+        {
+            this.width-=dt*100;
+        }
+        }
+    }
+    this.addGameObject(orangebar);
+    
     var greenbar=this.add.sprite(0,450-32,"bar");
     greenbar.fixedToCamera=true;
     greenbar.width=800;
