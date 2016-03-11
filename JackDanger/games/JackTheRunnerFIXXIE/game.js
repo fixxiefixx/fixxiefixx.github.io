@@ -50,6 +50,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.atlas("wobby");
     this.load.atlas("slimeexplo");
     this.load.atlas("prof");
+    this.load.atlas("profblase");
     this.load.tilemap('map',null,null,Phaser.Tilemap.TILED_JSON);
     this.load.image("tileset");
     this.load.image("datatiles");
@@ -279,6 +280,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
     boss.phase=0;
     boss.timer=0;
     boss.zanz=0;//Anzahl Zombies die in einer Runde gespawnt wurden
+    boss.pipes=this.getMapObjects(this.map,"slimepipe");
+    boss.profspawns=this.getMapObjects(this.map,"profspawn");
     boss.updateObj=function(dt,state){
         switch(this.phase){
             case 0://Warte darauf dass der Spieler die Bossarena betritt
@@ -292,22 +295,11 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                 }
             break;
             case 1://Prof spawnen
-                
-                
-            
+
                     state.killAllZombies();
-                    var pipename;
-                    var profspawnname;
-                    if(Math.random()<0.5)
-                    {
-                        profspawnname="profspawn1";
-                    }else{
-                        profspawnname="profspawn2";
-                    }
-                    
-                    this.profspawnobj=state.getMapObjects(state.map,profspawnname)[0];
+                    this.profspawnobj=this.profspawns[Math.floor(Math.random()*this.profspawns.length)];
                     state.addProf(this.profspawnobj.x,this.profspawnobj.y-32);
-                    this.timer=4;
+                    this.timer=6;
                     this.phase=2;
                 
             break;
@@ -320,16 +312,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
             case 3://Zombie spawnen
             if(state.bossHealth>0)
                 {
-                var pipename;
-            if(Math.random()<0.5)
-                {
-                    pipename="slimepipe1";
-                }else{
-                    pipename="slimepipe2";
-                }
-                this.pipeobj=state.getMapObjects(state.map,pipename)[0];
+                this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
                 if(state.bossHealth>10){
-                    this.timer=1;
+                    this.timer=1.5;
                     state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
                 }
                 else{
@@ -409,7 +394,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
             
             this.body.velocity.x=0;
             var playerDistX=Math.abs(state.player.x-this.x);
-            if(this.x-state.player.x<400 && !this.firstfall)
+            if(this.x-state.player.x<450 && !this.firstfall)
             {
                 if(isGround&&!this.prevGround)
             {
@@ -510,7 +495,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
             
             this.body.velocity.x=0;
             var playerDistX=Math.abs(state.player.x-this.x);
-            if(this.x-state.player.x<400 && !this.firstfall)
+            if(this.x-state.player.x<450 && !this.firstfall)
             {
                 if(isGround&&!this.prevGround)
             {
