@@ -67,6 +67,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.audio("tuer",["tuer.ogg","tuer.mp3"]);
     this.load.audio("bgmusic",["bgmusic.ogg","bgmusic.mp3"]);
     this.load.audio("bossmusic",["bossmusic.ogg","bossmusic.mp3"]);
+    this.load.audio("bossmusic2",["bossmusic2.ogg","bossmusic2.mp3"]);
 }
 
 //wird nach dem laden gestartet
@@ -88,6 +89,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.update = function() {
 // Zeug das zum Spiel gehört, das kannst du alles /////// 
 // Löschen oder ändern oder was weiß ich ////////////////
 /////////////////////////////////////////////////////////
+
+
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addGameObject=function(obj){
     obj.objid=this.beiobjid;
@@ -113,6 +116,18 @@ JackDanger.JackTheRunnerFIXXIE.prototype.getMapObjects = function(map,name) {
         }
     }
     return objs;
+}
+
+JackDanger.JackTheRunnerFIXXIE.prototype.moveTowards=function(z1,z2,speed){
+    if(z1<z2){
+        z1+=speed;
+        z1=Math.min(z1,z2);
+    }
+    if(z1>z2){
+        z1-=speed;
+        z1=Math.max(z1,z2);
+    }
+    return z1;
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addFire = function(x,y,speed) {
@@ -167,6 +182,157 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addSlimeexplo = function(x,y) {
     this.addGameObject(explo);
 }
 
+JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
+    var state=this;
+    state.bossmusic2Sound.play("",0,1,true);
+    this.bossHealth=this.maxBossHealth;
+    this.updateBossBar();
+    var prof=this.add.sprite(x,y,"profblase","0001");
+    
+    prof.anchor.setTo(0.5,1);
+    this.physics.enable(prof);
+    prof.body.setSize(32,32,0,-16);
+    prof.body.allowGravity=false;
+    prof.animations.add("wobbing",Phaser.Animation.generateFrameNames("",1,16,"",4),10,true);
+    prof.phase=0;
+    prof.timer=1;
+    prof.arenamin=this.getMapObjects(this.map,"bossarenamin")[0];
+    prof.arenamax=this.getMapObjects(this.map,"bossarenamax")[0];
+    prof.targetx=(prof.arenamax.x+prof.arenamin.x)*0.5;
+    prof.targety=(prof.arenamax.y+prof.arenamin.y)*0.5;
+    prof.movespeed=100;
+    prof.animations.play("wobbing");
+    prof.zombiespawnen=false;
+    prof.pipes=this.getMapObjects(this.map,"slimepipe");
+    prof.updateObj=function(dt,state){
+        if(state.physics.arcade.overlap(this,state.player))
+        {
+            state.damagePlayer();
+        }
+        switch(this.phase){
+            case 0://Zum Ziel fliegen
+                this.x=state.moveTowards(this.x,this.targetx,dt*this.movespeed);
+                this.y=state.moveTowards(this.y,this.targety,dt*this.movespeed);
+                if(Math.abs(this.targetx-this.x)<1 && Math.abs(this.targety-this.y)<1){
+                    this.phase=1;
+                }
+            break;
+            case 1://Entscheiden was als nächstes machen
+                var moeglichkeiten=6;
+                var m=Math.floor(Math.random()*moeglichkeiten);
+                switch(m)
+                {   default:
+                    case 0://Diagonal zum Spieler fliegen
+                        this.targetx=this.x;
+                        this.targety=this.y;
+                        if(this.x<state.player.x){
+                            this.targetx+=150;
+                        }else{
+                            this.targetx-=150;
+                        }
+                        if(this.y<state.player.y){
+                            this.targety+=150;
+                        }else{
+                            this.targety-=150;
+                        }
+                        
+                        this.targetx=Math.max(this.targetx,this.arenamin.x);
+                        this.targetx=Math.min(this.targetx,this.arenamax.x);
+                        
+                        this.targety=Math.max(this.targety,this.arenamin.y);
+                        this.targety=Math.min(this.targety,this.arenamax.y);
+                        this.movespeed=Math.random()*80+40;
+                        this.phase=0;
+                    break;
+                    
+                    case 1://Gegner spawnen
+                        this.phase=2;
+                        if(this.zombiespawnen)
+                        {
+                            this.zombiespawnen=false;
+                            this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
+                            if(state.bossHealth>10){
+                                this.timer=1.5;
+                                state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
+                            }
+                            else{
+                               this.timer=1.7;
+                               state.addWobby(this.pipeobj.x+32,this.pipeobj.y);
+                            }    
+
+                        }
+                        state.addTimer(1,function(){
+                            prof.phase=1;
+                        });
+                    break;
+                }
+            break;
+            case 2://Nichts tun
+            
+            break;
+        }
+    }
+    prof.objDamage=function(){
+        
+            state.damageBoss();
+            if(state.bossHealth>0)
+            {
+                this.tint="0xFF0000";
+                var sprite=this;
+                state.addTimer(0.1,function(){
+                    sprite.tint="0xFFFFFF";
+                });
+                //Zur Mitte fliegen
+                /*this.targetx=(this.arenamax.x+this.arenamin.x)*0.5;
+                this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;;
+                this.movespeed=100;
+                this.phase=0;*/
+                this.zombiespawnen=true;
+            }else{
+                state.addSlimeexplo(this.x,this.y);
+                state.removeGameObject(this);
+                state.addTimer(2,function(){
+                    state.bgmusicSound.stop();
+                    state.bossmusicSound.stop();
+                    state.bossmusic2Sound.stop();
+                    onVictory();
+                });
+            }
+        
+    }
+    /*prof.renderObj=function(state){
+        game.debug.body(this);
+    }*/
+    this.addGameObject(prof);
+}
+
+JackDanger.JackTheRunnerFIXXIE.prototype.addJumpProf = function(x,y) {
+    var prof=this.add.sprite(x,y,"prof","prof_frei");
+    this.physics.enable(prof);
+    prof.phase=0;
+    prof.timer=5;
+    prof.updateObj=function(dt,state){
+        switch(this.phase)
+        {
+            case 0:
+                if(this.y>500){
+                    this.phase=1;
+                    this.body.velocity.y=0;
+                    this.body.allowGravity=false;
+                }
+            break;
+            case 1:
+                this.timer-=dt;
+                if(this.timer<=0){
+                    state.removeGameObject(this);
+                    state.addBubbleProf(this.x,this.y);
+                }
+            break;
+        }
+    }
+    this.addGameObject(prof);
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
     this.tuerSound.play();
     var prof=this.add.sprite(x,y,"prof","prof03");
@@ -176,8 +342,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
     prof.animations.add("open",["pof03","prof04","prof05","prof06","prof07","prof08","prof09","prof10","prof01"],20,false);
     prof.animations.add("close",["pof10","prof09","prof08","prof07","prof06","prof05","prof04","prof03"],20,false);
     prof.animations.add("laughing",["prof01","prof02"],10,true);
-    prof.animations.add("die",["prof11","prof12","prof13","prof14","prof15","prof16","prof17","prof18"],8,false);
+    prof.animations.add("die",["prof11","prof19"],8,true);
     prof.animations.add("aua",["prof11","prof12"],10,true);
+    prof.animations.add("empty",["prof18"],1,false);
     prof.animations.play("open");
     prof.timer=0.5;
     prof.phase=0;
@@ -211,21 +378,23 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
                     state.removeGameObject(this);
                 }
             break;
-            case 3://Sterben
+            case 3://Rot blinken
             this.timer-=dt;
                 if(this.timer<=0)
                 {
-                    state.addSlimeexplo(this.x+32,this.y+64);
+                    //state.addSlimeexplo(this.x+32,this.y+64);
+                    state.addJumpProf(this.x,this.y);
+                    this.animations.play("empty");
                     this.timer=2;
                     this.phase=4;
                 }
             break;
-            case 4://Platzen
+            case 4://Nichts tun
+            this.visible=!this.visible;
             this.timer-=dt;
-            if(this.timer<=0)
-                {
-                    onVictory();
-                }
+            if(this.timer<=0){
+                state.removeGameObject(this);
+            }
             break;
         }
     }
@@ -240,6 +409,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProf = function(x,y) {
                 this.animations.play("die");
                 this.timer=1;
                 this.phase=3;
+                state.removeGameObject(state.boss);
             }
         }
     }
@@ -276,6 +446,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addTimer = function(time,callback) {
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
     var boss=this.add.sprite(x,y,"prof","prof03");
+    this.boss=boss;
     boss.visible=false;
     boss.phase=0;
     boss.timer=0;
@@ -382,9 +553,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
             state.physics.arcade.collide(this,state.layer_collision);
             if(state.physics.arcade.overlap(this,state.player))
             {
-                state.bgmusicSound.stop();
-                state.bossmusicSound.stop();
-                onLose();
+                state.damagePlayer();
             }
             
             var isGround=this.body.onFloor();
@@ -483,9 +652,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
             state.physics.arcade.collide(this,state.layer_collision);
             if(state.physics.arcade.overlap(this,state.player))
             {
-                state.bgmusicSound.stop();
-                state.bossmusicSound.stop();
-                onLose();
+                state.damagePlayer();
             }
             
             var isGround=this.body.onFloor();
@@ -604,11 +771,14 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBossHealth = function() {
     orangebar.timer=0;
     orangebar.lastgreenw=redbar.width;
     orangebar.updateObj=function(dt,state){
-        if(greenbar.width!=this.lastgreenw)
+        if(greenbar.width<this.lastgreenw)
         {
             this.timer=1;
             this.lastgreenw=greenbar.width;
-        }
+        }else
+            if(greenbar.width>this.lastgreenw){
+                this.width=state.bossbar.width;
+            }
         if(this.timer>0)
         {
             this.timer-=dt;
@@ -634,15 +804,27 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBossHealth = function() {
     this.bosstext.setText("Boss");
 }
 
+JackDanger.JackTheRunnerFIXXIE.prototype.updateBossBar = function() {
+    this.bossbar.width=(this.bossHealth/this.maxBossHealth)*800;
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
     this.bossHealth -= 1;
-    this.bossbar.width=(this.bossHealth/this.maxBossHealth)*800;
+    this.updateBossBar();
     if(this.bossHealth<=0)
     {
         this.bgmusicSound.stop();
         this.bossmusicSound.stop();
         //onVictory();
     }
+}
+
+JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
+{
+    this.bgmusicSound.stop();
+    this.bossmusicSound.stop();
+    this.bossmusic2Sound.stop();
+    onLose();
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
@@ -686,6 +868,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
     this.hahaSound=this.add.audio("haha");
     this.bgmusicSound=this.add.audio("bgmusic");
     this.bossmusicSound=this.add.audio("bossmusic");
+    this.bossmusic2Sound=this.add.audio("bossmusic2");
     
     //Play Backround music
     this.bgmusicSound.play("",0,1,true);
@@ -763,9 +946,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
         
         this.lastJump=Pad.isDown(Pad.JUMP);
         if(this.y>500){
-            state.bgmusicSound.stop();
-            state.bossmusicSound.stop();
-            onLose();
+            state.damagePlayer();
         }
         this.lastGround=isGround;
     }
@@ -858,4 +1039,15 @@ JackDanger.JackTheRunnerFIXXIE.prototype.updateObjects = function(dt) {
     if(this.objectIdsToRemove.length>0)
         this.objectIdsToRemove=new Array();
     //console.log("Objcount: "+this.gameObjects.length);
+}
+
+JackDanger.JackTheRunnerFIXXIE.prototype.render = function() {
+    var obj;
+    var i;
+    for(i in this.gameObjects){
+        obj=this.gameObjects[i];
+        if(obj.renderObj!=null){
+            obj.renderObj(this);
+        }
+    }
 }
