@@ -28,9 +28,14 @@ So dass es dann alles auch supi aussieht!
 Spiellänge 2-4 Minuten.
 */
 
+
+
 JackDanger.JackTheRunnerFIXXIE = function() {
 
 };
+
+//Cheats
+JackDanger.JackTheRunnerFIXXIE.prototype.godmode=false;
 
 //hier musst du deine Eintragungen vornhemen.
 addMyGame("JackTheRunnerFIXXIE", "Jack The Runner", "fixxiefixx", "Besiege den verrückten Professer", JackDanger.JackTheRunnerFIXXIE);
@@ -51,7 +56,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.atlas("slimeexplo");
     this.load.atlas("prof");
     this.load.atlas("profblase");
+    this.load.atlas("slimedrop");
+    
     this.load.tilemap('map',null,null,Phaser.Tilemap.TILED_JSON);
+    
     this.load.image("tileset");
     this.load.image("datatiles");
     this.load.image("player");
@@ -68,6 +76,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.audio("bgmusic",["bgmusic.ogg","bgmusic.mp3"]);
     this.load.audio("bossmusic",["bossmusic.ogg","bossmusic.mp3"]);
     this.load.audio("bossmusic2",["bossmusic2.ogg","bossmusic2.mp3"]);
+    this.load.audio("throw",["throw.wav"]);
 }
 
 //wird nach dem laden gestartet
@@ -182,9 +191,50 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addSlimeexplo = function(x,y) {
     this.addGameObject(explo);
 }
 
+JackDanger.JackTheRunnerFIXXIE.prototype.addSlimedrop = function(x,y,xspeed,yspeed) {
+    var drop=this.add.sprite(x,y,"slimedrop","0001");
+    drop.anchor.setTo(.5,1);
+    this.physics.enable(drop);
+    drop.body.velocity.x=xspeed;
+    drop.body.velocity.y=yspeed;
+    drop.animations.add("ground",["0002","0003","0004","0005","0006"],20,false);
+    drop.timer=0.25;
+    drop.phase=0;
+    drop.updateObj=function(dt,state){
+        if(state.physics.arcade.overlap(this,state.player))
+        {
+            state.damagePlayer();
+        }
+        if(this.y>500)
+        {
+            state.removeGameObject(this);
+        }
+        switch(this.phase){
+            case 0:
+                if(state.physics.arcade.collide(this,state.layer_collision)){
+                    this.body.allowGravity=false;
+                    this.body.velocity.x=0;
+                    this.body.velocity.y=0;
+                    this.animations.play("ground");
+                    this.phase=1;
+                }
+            break;
+            case 1:
+                this.timer-=dt;
+                if(this.timer<=0){
+                    state.removeGameObject(this);
+                    state.addSlimeexplo(this.x,this.y);
+                }
+            break;
+        }
+    }
+    this.addGameObject(drop);
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
     var state=this;
     state.bossmusic2Sound.play("",0,1,true);
+    this.maxBossHealth=50;
     this.bossHealth=this.maxBossHealth;
     this.updateBossBar();
     var prof=this.add.sprite(x,y,"profblase","0001");
@@ -218,7 +268,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 }
             break;
             case 1://Entscheiden was als nächstes machen
-                var moeglichkeiten=6;
+                var moeglichkeiten=4;
                 var m=Math.floor(Math.random()*moeglichkeiten);
                 switch(m)
                 {   default:
@@ -247,6 +297,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                     
                     case 1://Gegner spawnen
                         this.phase=2;
+                        this.timer=1;
                         if(this.zombiespawnen)
                         {
                             this.zombiespawnen=false;
@@ -261,17 +312,40 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                             }    
 
                         }
-                        state.addTimer(1,function(){
-                            prof.phase=1;
-                        });
+                        
+                    break;
+                    case 2:
+                        this.phase=3;
                     break;
                 }
             break;
-            case 2://Nichts tun
-            
+            case 2://Nichts tun bis timer abgelaufen
+                this.timer-=dt;
+                if(this.timer<=0)
+                {
+                    this.phase=1;
+                }
+            break;
+             case 3://Hoch fliegen um danach Slimedrops zu werfen.
+                if(this.y+100>state.player.y)
+                {
+                    this.y-=200*dt;
+                }else
+                {
+                    this.phase=4;
+                }
+            break;
+            case 4://Slimedrops werfen
+                state.throwSound.play();
+                this.phase=2;
+                this.timer=1;
+                var dropyspeed=Math.random()*-300 - 100;
+                state.addSlimedrop(this.x,this.y,100,dropyspeed);
+                state.addSlimedrop(this.x,this.y,-100,dropyspeed);
             break;
         }
     }
+    var treffercounter=20;
     prof.objDamage=function(){
         
             state.damageBoss();
@@ -287,7 +361,11 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;;
                 this.movespeed=100;
                 this.phase=0;*/
-                this.zombiespawnen=true;
+                if(treffercounter--<=0)
+                {
+                    this.zombiespawnen=true;
+                    treffercounter=20;
+                }
             }else{
                 state.addSlimeexplo(this.x,this.y);
                 state.removeGameObject(this);
@@ -821,10 +899,12 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
 
 JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
 {
-    this.bgmusicSound.stop();
-    this.bossmusicSound.stop();
-    this.bossmusic2Sound.stop();
-    onLose();
+    if(!this.godmode){
+        this.bgmusicSound.stop();
+        this.bossmusicSound.stop();
+        this.bossmusic2Sound.stop();
+        onLose();
+    }
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
@@ -869,6 +949,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
     this.bgmusicSound=this.add.audio("bgmusic");
     this.bossmusicSound=this.add.audio("bossmusic");
     this.bossmusic2Sound=this.add.audio("bossmusic2");
+    this.throwSound=this.add.audio("throw");
     
     //Play Backround music
     this.bgmusicSound.play("",0,1,true);
