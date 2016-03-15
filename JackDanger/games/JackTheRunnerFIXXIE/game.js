@@ -37,13 +37,12 @@ JackDanger.JackTheRunnerFIXXIE = function() {
 //Cheats
 JackDanger.JackTheRunnerFIXXIE.prototype.godmode=false;
 
-//hier musst du deine Eintragungen vornhemen.
-addMyGame("JackTheRunnerFIXXIE", "Jack The Runner", "fixxiefixx", "Besiege den verrückten Professer", JackDanger.JackTheRunnerFIXXIE);
+
 
 
 JackDanger.JackTheRunnerFIXXIE.prototype.init = function() {
-    logInfo("init Game");
-    addLoadingScreen(this);//nicht anfassen
+    logInfo("init Game JackTheRunnerFIXXIE");
+    addLoadingScreen(this,false);//nicht anfassen, wenn true dann loadingscreen überspringen
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
@@ -58,7 +57,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.atlas("profblase");
     this.load.atlas("slimedrop");
     
-    this.load.tilemap('map',null,null,Phaser.Tilemap.TILED_JSON);
+    this.load.tilemap('map',"map.json",null,Phaser.Tilemap.TILED_JSON);
     
     this.load.image("tileset");
     this.load.image("datatiles");
@@ -82,9 +81,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
 //wird nach dem laden gestartet
 JackDanger.JackTheRunnerFIXXIE.prototype.create = function() {
     Pad.init();//nicht anfassen
-    removeLoadingScreen();//nicht anfassen
+    //removeLoadingScreen();//nicht anfassen
 
-    this.addStuff();
+    //this.addStuff();
 }
 
 //wird jeden Frame aufgerufen
@@ -373,6 +372,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                     state.bgmusicSound.stop();
                     state.bossmusicSound.stop();
                     state.bossmusic2Sound.stop();
+                    state.world.setBounds(0,0,800,450);
                     onVictory();
                 });
             }
@@ -903,11 +903,12 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
         this.bgmusicSound.stop();
         this.bossmusicSound.stop();
         this.bossmusic2Sound.stop();
+        this.world.setBounds(0,0,800,450);
         onLose();
     }
 }
 
-JackDanger.JackTheRunnerFIXXIE.prototype.addStuff = function() {
+JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.stage.backgroundColor = '#1A1008';
     
     this.background=this.add.tileSprite(0,0,800,450,"bg","");
@@ -1132,3 +1133,13 @@ JackDanger.JackTheRunnerFIXXIE.prototype.render = function() {
         }
     }
 }
+
+//hier musst du deine Eintragungen vornhemen.
+addMyGame("JackTheRunnerFIXXIE",
+ "Jack The Runner",
+ "fixxiefixx",
+ "Besiege den verrückten Professer",
+ "Bewegen",
+ "Springen",
+ "Schiessen",
+ JackDanger.JackTheRunnerFIXXIE);
