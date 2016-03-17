@@ -299,16 +299,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                         this.timer=1;
                         if(this.zombiespawnen)
                         {
-                            this.zombiespawnen=false;
-                            this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
-                            if(state.bossHealth>10){
-                                this.timer=1.5;
-                                state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
-                            }
-                            else{
-                               this.timer=1.7;
-                               state.addWobby(this.pipeobj.x+32,this.pipeobj.y);
-                            }    
+                            
 
                         }
                         
@@ -342,28 +333,58 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 state.addSlimedrop(this.x,this.y,100,dropyspeed);
                 state.addSlimedrop(this.x,this.y,-100,dropyspeed);
             break;
+            case 5://Wenn 20 mal getroffen zur Mitte fliegen
+                this.x=state.moveTowards(this.x,this.targetx,dt*this.movespeed);
+                this.y=state.moveTowards(this.y,this.targety,dt*this.movespeed);
+                if(Math.abs(this.targetx-this.x)<1 && Math.abs(this.targety-this.y)<1){
+                    this.phase=6;
+                    this.timer=1;
+                    this.gegnerspawnen=4;
+                }
+            break;
+            case 6:
+            this.timer-=dt;
+            if(this.timer<=0)
+            {
+                if(--this.gegnerspawnen>0)
+                {
+                    //Zombie spawnen
+                    this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
+                    if(state.bossHealth>10){
+                        this.timer=1.5;
+                        state.addZombie(this.pipeobj.x+32,this.pipeobj.y,true);
+                    }
+                    else{
+                       this.timer=1.7;
+                       state.addWobby(this.pipeobj.x+32,this.pipeobj.y,true);
+                    }    
+                }else{
+                    this.phase=2;
+                    this.timer=3;
+                }
+            }
+            break;
         }
     }
-    var treffercounter=20;
+    var treffercounter=10;
     prof.objDamage=function(){
         
             state.damageBoss();
             if(state.bossHealth>0)
             {
+                
                 this.tint="0xFF0000";
                 var sprite=this;
                 state.addTimer(0.1,function(){
-                    sprite.tint="0xFFFFFF";
+                    sprite.tint="0xFFFFFFFF";
                 });
-                //Zur Mitte fliegen
-                /*this.targetx=(this.arenamax.x+this.arenamin.x)*0.5;
-                this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;;
-                this.movespeed=100;
-                this.phase=0;*/
                 if(treffercounter--<=0)
                 {
-                    this.zombiespawnen=true;
-                    treffercounter=20;
+                    this.phase=5;
+                    this.targetx=(this.arenamax.x+this.arenamin.x)*0.5;
+                    this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;;
+                    this.movespeed=100;
+                    treffercounter=10;
                 }
             }else{
                 state.addSlimeexplo(this.x,this.y);
@@ -609,7 +630,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addChili = function(x,y) {
     this.addGameObject(chili);
 }
 
-JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
+JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y,nowaiting) {
     //return;
     var state=this;
     var zombie = this.add.sprite(x,y, "zombie", "walk0001");
@@ -641,7 +662,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
             
             this.body.velocity.x=0;
             var playerDistX=Math.abs(state.player.x-this.x);
-            if(this.x-state.player.x<450 && !this.firstfall)
+            if((this.x-state.player.x<450 || nowaiting) && !this.firstfall)
             {
                 if(isGround&&!this.prevGround)
             {
@@ -710,7 +731,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addZombie = function(x,y) {
 
 
 
-JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
+JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y,nowaiting) {
     //return;
     var state=this;
     var zombie = this.add.sprite(x,y, "wobby", "wobby0015");
@@ -740,7 +761,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y) {
             
             this.body.velocity.x=0;
             var playerDistX=Math.abs(state.player.x-this.x);
-            if(this.x-state.player.x<450 && !this.firstfall)
+            if((this.x-state.player.x<450 || nowaiting) && !this.firstfall)
             {
                 if(isGround&&!this.prevGround)
             {
