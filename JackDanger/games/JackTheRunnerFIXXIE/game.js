@@ -36,6 +36,7 @@ JackDanger.JackTheRunnerFIXXIE = function() {
 
 //Cheats
 JackDanger.JackTheRunnerFIXXIE.prototype.godmode=false;
+JackDanger.JackTheRunnerFIXXIE.prototype.fireonstart=false;
 
 
 
@@ -230,6 +231,21 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addSlimedrop = function(x,y,xspeed,yspe
     this.addGameObject(drop);
 }
 
+JackDanger.JackTheRunnerFIXXIE.prototype.spawnTubeEnemies=function(){
+    //Zombie spawnen
+    var pipes=this.getMapObjects(this.map,"slimepipe");
+    var i;
+    for(i=0;i<pipes.length;i++){
+        var pipeobj=pipes[i];
+        if(this.bossHealth>this.maxBossHealth*0.5){
+            this.addZombie(pipeobj.x+32,pipeobj.y,true);
+        }
+        else{
+           this.addWobby(pipeobj.x+32,pipeobj.y,true);
+        }  
+    }    
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
     var state=this;
     state.bossmusic2Sound.play("",0,1,true);
@@ -346,22 +362,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
             this.timer-=dt;
             if(this.timer<=0)
             {
-                if(--this.gegnerspawnen>0)
-                {
-                    //Zombie spawnen
-                    this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
-                    if(state.bossHealth>10){
-                        this.timer=1.5;
-                        state.addZombie(this.pipeobj.x+32,this.pipeobj.y,true);
-                    }
-                    else{
-                       this.timer=1.7;
-                       state.addWobby(this.pipeobj.x+32,this.pipeobj.y,true);
-                    }    
-                }else{
-                    this.phase=2;
-                    this.timer=3;
-                }
+                state.spawnTubeEnemies();
+                this.phase=2;
+                this.timer=6;
+                
             }
             break;
         }
@@ -582,26 +586,11 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
             case 3://Zombie spawnen
             if(state.bossHealth>0)
                 {
-                this.pipeobj=this.pipes[Math.floor(Math.random()*this.pipes.length)];
-                if(state.bossHealth>10){
-                    this.timer=1.5;
-                    state.addZombie(this.pipeobj.x+32,this.pipeobj.y);
-                }
-                else{
-                   this.timer=1.7;
-                   state.addWobby(this.pipeobj.x+32,this.pipeobj.y);
-                }                   
+                    state.spawnTubeEnemies();
+                    this.timer=6;
+                    this.phase=4;
+                    this.zanz=0;
                 
-                if(this.zanz++<4)
-                {
-                    
-                    this.phase=2;
-                 
-                }else{
-                this.timer=3;
-                this.phase=4;
-                this.zanz=0;
-                }
                 }
             break;
             case 4://Den Zombie Zeit geben um vom Spieler fertig gemacht zu werden
@@ -623,7 +612,15 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addChili = function(x,y) {
     {
         if(state.physics.arcade.overlap(this,state.player))
         {
-            state.player.allowFire=true;
+            if(!state.player.allowFire)
+            {
+                state.player.allowFire=true;
+                
+            }else{
+                if(!state.fireonstart){
+                    state.player.shootTimeMax-=0.1;
+                }
+            }
             state.removeGameObject(this);
         }
     }
@@ -876,7 +873,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBossHealth = function() {
             this.lastgreenw=greenbar.width;
         }else
             if(greenbar.width>this.lastgreenw){
-                this.width=state.bossbar.width;
+                this.width=greenbar.width;
+                this.lastgreenw=greenbar.width;
             }
         if(this.timer>0)
         {
@@ -959,7 +957,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     
     
     
-    this.maxBossHealth=25;
+    this.maxBossHealth=50;
     this.bossHealth=this.maxBossHealth;
     
     //Add Audio
@@ -991,10 +989,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.player.animations.add("stand",["walk0021"],1,false);
     this.player.animations.play("stand");
     this.player.lastJump=false;
-    this.player.shootTimeMax=0.3;
+    this.player.shootTimeMax=this.fireonstart?0.2:0.5;
     this.player.shootTime=0;
     this.player.lastGround=false;
-    this.player.allowFire=false;
+    this.player.allowFire=this.fireonstart;
     this.player.updateObj=function(dt,state){
         state.physics.arcade.collide(this,state.layer_collision);
         var isGround=this.body.onFloor();
@@ -1159,8 +1157,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.render = function() {
 addMyGame("JackTheRunnerFIXXIE",
  "Jack The Runner",
  "fixxiefixx",
- "Besiege den verrückten Professer",
+ "Besiege den verrückten Professer!",
  "Bewegen",
  "Springen",
- "Schiessen",
+ "Feuer spucken",
  JackDanger.JackTheRunnerFIXXIE);
