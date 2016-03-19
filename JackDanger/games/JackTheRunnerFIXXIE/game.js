@@ -37,6 +37,7 @@ JackDanger.JackTheRunnerFIXXIE = function() {
 //Cheats
 JackDanger.JackTheRunnerFIXXIE.prototype.godmode=false;
 JackDanger.JackTheRunnerFIXXIE.prototype.fireonstart=false;
+JackDanger.JackTheRunnerFIXXIE.prototype.spawnatboss=false;
 
 
 
@@ -246,6 +247,22 @@ JackDanger.JackTheRunnerFIXXIE.prototype.spawnTubeEnemies=function(){
     }    
 }
 
+JackDanger.JackTheRunnerFIXXIE.prototype.smoothMove=function(x)
+    {
+        if(x<0){
+            return 0;
+        }
+        if(x>1){
+            return 1;
+        }
+        return (-Math.sin(x*Math.PI+Math.PI*0.5)+1)*0.5;
+    }
+    
+JackDanger.JackTheRunnerFIXXIE.prototype.lerp=function lerp(a, b, t) {
+ 
+    return a+t*(b-a);
+}
+
 JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
     var state=this;
     state.bossmusic2Sound.play("",0,1,true);
@@ -263,12 +280,45 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
     prof.timer=1;
     prof.arenamin=this.getMapObjects(this.map,"bossarenamin")[0];
     prof.arenamax=this.getMapObjects(this.map,"bossarenamax")[0];
-    prof.targetx=(prof.arenamax.x+prof.arenamin.x)*0.5;
-    prof.targety=(prof.arenamax.y+prof.arenamin.y)*0.5;
+    //prof.targetx=(prof.arenamax.x+prof.arenamin.x)*0.5;
+    //prof.targety=(prof.arenamax.y+prof.arenamin.y)*0.5;
+    
     prof.movespeed=100;
     prof.animations.play("wobbing");
     prof.zombiespawnen=false;
     prof.pipes=this.getMapObjects(this.map,"slimepipe");
+    prof.startx=prof.x;
+    prof.starty=prof.y;
+    prof.startTween=function(x,y){
+        this.startx=this.x;
+        this.starty=this.y;
+        this.tox=x;
+        this.toy=y;
+        var diffx=x-this.x;
+        var diffy=y-this.y;
+        var dist=Math.sqrt(diffx*diffx+diffy*diffy);
+        if(dist>1)
+        {
+            this.tweenspeed=(1/dist)*this.movespeed;
+        }else{
+            this.tweenspeed=this.movespeed;
+        }
+        this.tweentime=0;
+    }
+    prof.updateTween=function(dt)
+    {
+        this.tweentime+=this.tweenspeed*dt;
+        var fertig =false;
+        if(this.tweentime>1)
+        {
+            this.tweentime=1;
+            fertig=true;
+        }
+        this.x=state.lerp(this.startx,this.tox,state.smoothMove( this.tweentime));
+        this.y=state.lerp(this.starty,this.toy,state.smoothMove( this.tweentime));
+        return fertig;
+    }
+    prof.startTween((prof.arenamax.x+prof.arenamin.x)*0.5,(prof.arenamax.y+prof.arenamin.y)*0.5);
     prof.updateObj=function(dt,state){
         if(state.physics.arcade.overlap(this,state.player))
         {
@@ -276,9 +326,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
         }
         switch(this.phase){
             case 0://Zum Ziel fliegen
-                this.x=state.moveTowards(this.x,this.targetx,dt*this.movespeed);
-                this.y=state.moveTowards(this.y,this.targety,dt*this.movespeed);
-                if(Math.abs(this.targetx-this.x)<1 && Math.abs(this.targety-this.y)<1){
+                
+                if(this.updateTween(dt)){
                     this.phase=1;
                 }
             break;
@@ -291,9 +340,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                         this.targetx=this.x;
                         this.targety=this.y;
                         if(this.x<state.player.x){
-                            this.targetx+=150;
+                            this.targetx+=100;
                         }else{
-                            this.targetx-=150;
+                            this.targetx-=100;
                         }
                         if(this.y<state.player.y){
                             this.targety+=150;
@@ -306,11 +355,12 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                         
                         this.targety=Math.max(this.targety,this.arenamin.y);
                         this.targety=Math.min(this.targety,this.arenamax.y);
-                        this.movespeed=Math.random()*80+40;
+                        this.movespeed=100;
+                        this.startTween(this.targetx,this.targety)
                         this.phase=0;
                     break;
                     
-                    case 1://Gegner spawnen
+                    /*case 1://Gegner spawnen
                         this.phase=2;
                         this.timer=1;
                         if(this.zombiespawnen)
@@ -319,9 +369,11 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
 
                         }
                         
-                    break;
-                    case 2:
+                    break;*/
+                    case 1:
                         this.phase=3;
+                        this.movespeed=100;
+                        this.startTween(this.x,state.player.y-100);
                     break;
                 }
             break;
@@ -333,10 +385,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 }
             break;
              case 3://Hoch fliegen um danach Slimedrops zu werfen.
-                if(this.y+100>state.player.y)
-                {
-                    this.y-=200*dt;
-                }else
+                if(this.updateTween(dt))
                 {
                     this.phase=4;
                 }
@@ -350,9 +399,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 state.addSlimedrop(this.x,this.y,-100,dropyspeed);
             break;
             case 5://Wenn 20 mal getroffen zur Mitte fliegen
-                this.x=state.moveTowards(this.x,this.targetx,dt*this.movespeed);
-                this.y=state.moveTowards(this.y,this.targety,dt*this.movespeed);
-                if(Math.abs(this.targetx-this.x)<1 && Math.abs(this.targety-this.y)<1){
+                //this.x=state.moveTowards(this.x,this.targetx,dt*this.movespeed);
+                //this.y=state.moveTowards(this.y,this.targety,dt*this.movespeed);
+                if(this.updateTween(dt)){
                     this.phase=6;
                     this.timer=1;
                     this.gegnerspawnen=4;
@@ -385,9 +434,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 if(treffercounter--<=0)
                 {
                     this.phase=5;
-                    this.targetx=(this.arenamax.x+this.arenamin.x)*0.5;
-                    this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;;
+                    //this.targetx=(this.arenamax.x+this.arenamin.x)*0.5;
+                    //this.targety=(this.arenamax.y+this.arenamin.y)*0.5-80;
                     this.movespeed=100;
+                    this.startTween((this.arenamax.x+this.arenamin.x)*0.5,(this.arenamax.y+this.arenamin.y)*0.5-80);
                     treffercounter=10;
                 }
             }else{
@@ -428,7 +478,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addJumpProf = function(x,y) {
                 this.timer-=dt;
                 if(this.timer<=0){
                     state.removeGameObject(this);
-                    state.addBubbleProf(this.x,this.y);
+                    var arenamin=state.getMapObjects(state.map,"bossarenamin")[0];
+                    var arenamax=state.getMapObjects(state.map,"bossarenamax")[0];
+                    state.addBubbleProf((arenamin.x+arenamax.x)*0.5,450+32);
                 }
             break;
         }
@@ -1085,6 +1137,11 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     var bossspawn=this.getMapObjects(this.map,"bossspawn")[0];
     this.addBoss(bossspawn.x,bossspawn.y);
     
+    if(this.spawnatboss)
+    {
+        this.player.x=bossspawn.x;
+        this.player.y=bossspawn.y-200;
+    }
 
     //Zombies von links
     var backzombiespawns=this.getMapObjects(this.map,"backzombie");
