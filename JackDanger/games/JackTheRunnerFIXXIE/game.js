@@ -77,7 +77,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.audio("bgmusic",["bgmusic.ogg","bgmusic.mp3"]);
     this.load.audio("bossmusic",["bossmusic.ogg","bossmusic.mp3"]);
     this.load.audio("bossmusic2",["bossmusic2.ogg","bossmusic2.mp3"]);
+    this.load.audio("gameovermusic",["gameover.ogg","gameover.mp3"]);
     this.load.audio("throw",["throw.wav"]);
+    
+this.load.video("gameover",["gameover.mp4","gameover.webm"]);
 }
 
 //wird nach dem laden gestartet
@@ -586,6 +589,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addProfTrigger = function(x,y) {
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addTimer = function(time,callback) {
     var timer=new Object();
+    timer.type="timer";
     timer.time=time;
     timer.callback=callback;
     timer.updateObj=function(dt,state){
@@ -970,18 +974,25 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
 
 JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
 {
-    if(!this.godmode){
+    if(!this.godmode && !this.gameoverplayed){
+          //Add Video
+        this.gameovervideo=this.add.video("gameover");
+        this.gameovervideo.play(false);
+        this.gameovervideo.addToWorld(0,0);
+        this.gameoverplayed=true;
         this.bgmusicSound.stop();
         this.bossmusicSound.stop();
         this.bossmusic2Sound.stop();
+        this.gameovermusic.play();
         this.world.setBounds(0,0,800,450);
-        onLose();
+        this.player.visible=false;
+        this.addTimer(7,function(){onLose();});
     }
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.stage.backgroundColor = '#1A1008';
-    
+    this.gameoverplayed=false;
     this.background=this.add.tileSprite(0,0,800,450,"bg","");
     this.background.fixedToCamera=true;
     this.background.updateObj=function(dt,state){
@@ -1021,7 +1032,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.bgmusicSound=this.add.audio("bgmusic");
     this.bossmusicSound=this.add.audio("bossmusic");
     this.bossmusic2Sound=this.add.audio("bossmusic2");
+    this.gameovermusic=this.add.audio("gameovermusic");
     this.throwSound=this.add.audio("throw");
+    
+  
     
     //Play Backround music
     this.bgmusicSound.play("",0,1,true);
@@ -1165,7 +1179,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.updateObjects = function(dt) {
     var i;
     for(i in this.gameObjects){
         obj=this.gameObjects[i];
-        if(obj.updateObj!=null){
+        if(obj.updateObj!=null &&(!this.gameoverplayed || obj.type=="timer")){
             obj.updateObj(dt,this);
         }
     }
