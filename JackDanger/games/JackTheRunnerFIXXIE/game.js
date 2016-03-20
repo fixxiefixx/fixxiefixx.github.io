@@ -83,6 +83,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     
     this.load.video("gameover",["gameover.mp4","gameover.webm"]);
     this.load.video("final","final.mp4");
+    this.load.video("bgmovie","background.mp4");
 }
 
 //wird nach dem laden gestartet
@@ -613,6 +614,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addTimer = function(time,callback) {
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
+    
+    
+    
     var boss=this.add.sprite(x,y,"prof","prof03");
     this.boss=boss;
     boss.visible=false;
@@ -627,6 +631,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBoss = function(x,y) {
                 if(this.x-state.player.x<=0)
                 {
                     //Ok Bosskampf kann beginnen.
+                    state.bgmovie.play(true);
+                    state.background.visible=false;
+                    state.bgmim.visible=true;
+                    
                     state.addBossHealth();
                     state.bgmusicSound.stop();
                     state.bossmusicSound.play("",0,1,true);
@@ -1017,13 +1025,26 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
 
 JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     var state=this;
+    
+    this.gameObjects=new Array();
+    this.objectIdsToRemove=new Array();
+    this.objectsToAdd=new Array();
+    this.beiobjid=0;
+    
     this.stage.backgroundColor = '#1A1008';
     this.gameoverplayed=false;
+    
     this.background=this.add.tileSprite(0,0,800,450,"bg","");
     this.background.fixedToCamera=true;
     this.background.updateObj=function(dt,state){
         this.tilePosition.x=state.camera.x*-0.1;
     }
+    this.addGameObject(this.background);
+    
+    this.bgmovie=this.add.video("bgmovie");
+    this.bgmim=this.bgmovie.addToWorld(0,0);
+    this.bgmim.fixedToCamera=true;
+    this.bgmim.visible=false;
     
     
     this.map = this.add.tilemap('map');
@@ -1039,10 +1060,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.physics.startSystem(Phaser.Physics.ARCADE);
     this.physics.arcade.gravity.y = 700;
     
-    this.gameObjects=new Array();
-    this.objectIdsToRemove=new Array();
-    this.objectsToAdd=new Array();
-    this.beiobjid=0;
+    
     
     
     
@@ -1170,7 +1188,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     }
     this.addGameObject(this.player);
     
-    this.addGameObject(this.background);
+    
 
     //Add Zombies
     var zombiespawns=this.getMapObjects(this.map,"zombie");
