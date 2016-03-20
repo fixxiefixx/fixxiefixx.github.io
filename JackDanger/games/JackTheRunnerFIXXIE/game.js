@@ -80,7 +80,8 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.audio("gameovermusic",["gameover.ogg","gameover.mp3"]);
     this.load.audio("throw",["throw.wav"]);
     
-this.load.video("gameover",["gameover.mp4","gameover.webm"]);
+    this.load.video("gameover",["gameover.mp4","gameover.webm"]);
+    this.load.video("final","final.mp4");
 }
 
 //wird nach dem laden gestartet
@@ -432,7 +433,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                 this.tint="0xFF0000";
                 var sprite=this;
                 state.addTimer(0.1,function(){
-                    sprite.tint="0xFFFFFFFF";
+                    sprite.tint="0xFFFFFF";
                 });
                 if(treffercounter--<=0)
                 {
@@ -444,15 +445,21 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBubbleProf = function(x,y) {
                     treffercounter=10;
                 }
             }else{
-                state.addSlimeexplo(this.x,this.y);
                 state.removeGameObject(this);
-                state.addTimer(2,function(){
-                    state.bgmusicSound.stop();
+                var finalvid=state.add.video("final");
+                finalvid.play(false);
+                finalvid.addToWorld(0,0);
+                state.removeGameObject(state.player);
+
+                    
+                    state.world.setBounds(0,0,800,450);
+                    state.player.visible=false;
+                    state.addTimer(6.6,function(){
+                        state.bgmusicSound.stop();
                     state.bossmusicSound.stop();
                     state.bossmusic2Sound.stop();
-                    state.world.setBounds(0,0,800,450);
-                    onVictory();
-                });
+                        onVictory();});
+
             }
         
     }
