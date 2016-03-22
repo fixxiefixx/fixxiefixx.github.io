@@ -69,6 +69,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.image("chili");
     this.load.image("bar");
     this.load.image("bg","bg.jpg");
+    this.load.image("smoke");
     
     this.load.audio("slimeexplo",["slimeexplo.ogg","slimeexplo.mp3"]);
     this.load.audio("hmm",["hmm.ogg","hmm.mp3"]);
@@ -82,6 +83,9 @@ JackDanger.JackTheRunnerFIXXIE.prototype.preload = function() {
     this.load.audio("throw",["throw.wav"]);
     
     this.load.video("gameover",["gameover.mp4","gameover.webm"]);
+    this.load.video("wobbyeat","wobbyeat.mp4");
+    this.load.video("erstinken","erstinken.mp4");
+    this.load.video("water","water.mp4");
     this.load.video("final","final.mp4");
     this.load.video("bgmovie","background.mp4");
 }
@@ -197,6 +201,42 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addSlimeexplo = function(x,y) {
         }
     }
     this.addGameObject(explo);
+}
+
+JackDanger.JackTheRunnerFIXXIE.prototype.addSmoke=function(x,y){
+    var smoke=this.add.sprite(x,y,"smoke");
+    smoke.anchor.setTo(0.5,0.5);
+    this.physics.enable(smoke);
+    smoke.body.allowGravity=false;
+    smoke.phase=0;
+    smoke.toy=-150;
+    smoke.starty=smoke.y;
+    smoke.movespeed=100;
+    smoke.updateObj=function(dt,state){
+        if(state.physics.arcade.overlap(this,state.player))
+        {
+            state.damagePlayer("smoke");
+        }
+        this.angle+=dt*60;
+        switch(this.phase)
+        {
+            case 0://up
+                this.y-=dt*this.movespeed;
+                if(this.y-this.starty<this.toy)
+                {
+                    this.phase=1;
+                }
+            break;
+            case 1://down
+                this.y+=dt*this.movespeed;
+                if(this.y>this.starty)
+                {
+                    this.phase=0;
+                }
+            break;
+        }
+    }
+    this.addGameObject(smoke);
 }
 
 JackDanger.JackTheRunnerFIXXIE.prototype.addSlimedrop = function(x,y,xspeed,yspeed) {
@@ -821,7 +861,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addWobby = function(x,y,nowaiting) {
             state.physics.arcade.collide(this,state.layer_collision);
             if(state.physics.arcade.overlap(this,state.player))
             {
-                state.damagePlayer();
+                state.damagePlayer("wobby");
             }
             
             var isGround=this.body.onFloor();
@@ -989,9 +1029,10 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damageBoss = function() {
     }
 }
 
-JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
+JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function(damager)
 {
     var state=this;
+    this.player.damager=damager;
     if(!this.godmode && !this.player.blinken)
     {
         if(this.player.y<=450 && this.herzen.length>0)
@@ -1007,9 +1048,28 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
         }else{
             if( !this.gameoverplayed){
                   //Add Video
-                this.gameovervideo=this.add.video("gameover");
-                this.gameovervideo.play(false);
+                var playtime=7;
+                var videoname="gameover";
+                
+                if(this.player.damager=="wobby")
+                {
+                    playtime=6;
+                    videoname="wobbyeat";
+                }else
+                if(this.player.damager=="smoke"){
+                    playtime=8;
+                    videoname="erstinken";
+                }
+                if(this.player.damager=="water")
+                {
+                    playtime=6;
+                    videoname="water";
+                }
+                
+                this.gameovervideo=this.add.video(videoname);
                 this.gameovervideo.addToWorld(0,0);
+                this.gameovervideo.play(false);
+                
                 this.gameoverplayed=true;
                 this.bgmusicSound.stop();
                 this.bossmusicSound.stop();
@@ -1017,7 +1077,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.damagePlayer=function()
                 this.gameovermusic.play();
                 this.world.setBounds(0,0,800,450);
                 this.player.visible=false;
-                this.addTimer(7,function(){onLose();});
+                this.addTimer(playtime,function(){onLose();});
             }
         }
     }
@@ -1182,7 +1242,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
         
         this.lastJump=Pad.isDown(Pad.JUMP);
         if(this.y>500){
-            state.damagePlayer();
+            state.damagePlayer("water");
         }
         this.lastGround=isGround;
     }
@@ -1206,6 +1266,14 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     {
         var wobbiespawn=wobbiespawns[i];
         this.addWobby(wobbiespawn.x,wobbiespawn.y-64);
+    }
+    
+    //Add smokes
+    var smokespawns=this.getMapObjects(this.map,"smoke");
+    for(i=0;i<smokespawns.length;i++)
+    {
+        var smokespawn=smokespawns[i];
+        this.addSmoke(smokespawn.x+16,smokespawn.y);
     }
     
     //Add Proftriggers
