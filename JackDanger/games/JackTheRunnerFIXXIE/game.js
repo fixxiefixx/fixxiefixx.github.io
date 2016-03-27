@@ -1177,7 +1177,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     ,"walk0006","walk0007","walk0008","walk0009","walk0010","walk0011","walk0012","walk0013"
     ,"walk0014","walk0015","walk0016","walk0017","walk0018","walk0019"],30,true);
     this.player.animations.add("jump",["walk0022"],1,false);
-    this.player.animations.add("stand",["walk0021"],1,false);
+    this.player.animations.add("stand",["walk0001"],1,false);
     this.player.animations.play("stand");
     this.player.lastJump=false;
     this.player.shootTimeMax=this.fireonstart?0.2:0.5;
@@ -1185,6 +1185,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
     this.player.blinken=false;
     this.player.lastGround=false;
     this.player.allowFire=this.fireonstart;
+    this.player.scale.x=-1;
     this.player.updateObj=function(dt,state){
         state.physics.arcade.collide(this,state.layer_collision);
         var isGround=this.body.onFloor();
@@ -1199,7 +1200,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.mycreate = function() {
         }
         this.body.velocity.x=0;
         
-        if (Pad.isDown(Pad.JUMP)&&!this.lastJump && isGround) {
+        if ((Pad.isDown(Pad.JUMP)||Pad.isDown(Pad.UP))&&!this.lastJump && isGround) {
             this.body.velocity.y = -320;
             this.animations.play("jump");
             isGround=false;
