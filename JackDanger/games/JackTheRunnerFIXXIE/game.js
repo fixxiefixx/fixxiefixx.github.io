@@ -1009,7 +1009,7 @@ JackDanger.JackTheRunnerFIXXIE.prototype.addBossHealth = function() {
     this.addGameObject(greenbar);
     this.bossbar=greenbar;
     
-    this.bosstext = game.add.bitmapText(game.width / 2, 450-32, "testfont", "", 18);
+    this.bosstext = game.add.bitmapText(game.width / 2, 450-32, "white", "", 18);
     this.bosstext.fixedToCamera=true;
     this.bosstext.setText("Boss");
 }
@@ -1348,6 +1348,14 @@ JackDanger.JackTheRunnerFIXXIE.prototype.updateObjects = function(dt) {
     }
     if(this.objectIdsToRemove.length>0)
         this.objectIdsToRemove=new Array();
+    
+    if(this.gameoverplayed){
+        if(Pad.justDown(Pad.JUMP)){
+            onLose();
+        }
+    }
+    Pad.clearJustInput();
+    
     //console.log("Objcount: "+this.gameObjects.length);
 }
 
